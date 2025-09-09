@@ -116,8 +116,7 @@ const deleteCareUnit = async (req, res) => {
   try {
     const careUnit = await CareUnit.findByIdAndUpdate(
       req.params.id,
-      { isActive: false, updatedBy: req.user._id },
-      { new: true }
+      { updatedBy: req.user._id }
     );
 
     if (!careUnit) {
