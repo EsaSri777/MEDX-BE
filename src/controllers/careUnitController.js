@@ -8,7 +8,7 @@ import Medication from "../models/Medication.js";
 // @access  Private
 const getAllCareUnits = async (req, res) => {
   try {
-    const careUnits = await CareUnit.find({ isActive: true })
+    const careUnits = await CareUnit.find()
       .populate("createdBy", "username")
       .populate("updatedBy", "username")
       .sort({ createdAt: -1 });
