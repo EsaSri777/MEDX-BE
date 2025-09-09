@@ -126,16 +126,16 @@ const deleteCareUnit = async (req, res) => {
     // Cascade soft delete beds, fluids, and medications under this care unit
     await Promise.all([
       Bed.updateMany(
-        { careUnit: req.params.id, isActive: true },
-        { $set: { isActive: false, updatedBy: req.user._id } }
+        { careUnit: req.params.id },
+        { $set: { updatedBy: req.user._id } }
       ),
       Fluid.updateMany(
-        { careUnit: req.params.id, isActive: true },
-        { $set: { isActive: false, updatedBy: req.user._id } }
+        { careUnit: req.params.id },
+        { $set: { updatedBy: req.user._id } }
       ),
       Medication.updateMany(
-        { careUnit: req.params.id, isActive: true },
-        { $set: { isActive: false, updatedBy: req.user._id } }
+        { careUnit: req.params.id },
+        { $set: { updatedBy: req.user._id } }
       ),
     ]);
 
