@@ -114,13 +114,19 @@ const updateCareUnit = async (req, res) => {
 // @access  Private (Admin only)
 const deleteCareUnit = async (req, res) => {
   try {
+    // validate ID
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid care unit ID" });
+    }
+
+    // delete care unit
     const careUnit = await CareUnit.findByIdAndDelete(req.params.id);
 
     if (!careUnit) {
       return res.status(404).json({ message: "Care unit not found" });
     }
 
-    // Cascade delete (if you want hard deletes too)
+    // cascade delete children
     await Promise.all([
       Bed.deleteMany({ careUnit: req.params.id }),
       Fluid.deleteMany({ careUnit: req.params.id }),
@@ -129,11 +135,10 @@ const deleteCareUnit = async (req, res) => {
 
     res.json({ message: "Care unit and its beds, fluids, medications deleted successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Delete error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export {
   getAllCareUnits,
