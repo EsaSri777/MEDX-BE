@@ -114,29 +114,17 @@ const updateCareUnit = async (req, res) => {
 // @access  Private (Admin only)
 const deleteCareUnit = async (req, res) => {
   try {
-    const careUnit = await CareUnit.findByIdAndUpdate(
-      req.params.id,
-      { updatedBy: req.user._id }
-    );
+    const careUnit = await CareUnit.findByIdAndDelete(req.params.id);
 
     if (!careUnit) {
       return res.status(404).json({ message: "Care unit not found" });
     }
 
-    // Cascade soft delete beds, fluids, and medications under this care unit
+    // Cascade delete (if you want hard deletes too)
     await Promise.all([
-      Bed.updateMany(
-        { careUnit: req.params.id },
-        { $set: { updatedBy: req.user._id } }
-      ),
-      Fluid.updateMany(
-        { careUnit: req.params.id },
-        { $set: { updatedBy: req.user._id } }
-      ),
-      Medication.updateMany(
-        { careUnit: req.params.id },
-        { $set: { updatedBy: req.user._id } }
-      ),
+      Bed.deleteMany({ careUnit: req.params.id }),
+      Fluid.deleteMany({ careUnit: req.params.id }),
+      Medication.deleteMany({ careUnit: req.params.id }),
     ]);
 
     res.json({ message: "Care unit and its beds, fluids, medications deleted successfully" });
@@ -145,6 +133,7 @@ const deleteCareUnit = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export {
   getAllCareUnits,
