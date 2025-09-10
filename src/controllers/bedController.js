@@ -3,7 +3,7 @@ import CareUnit from "../models/CareUnit.js";
 
 // Ensure care unit exists and is active
 const ensureCareUnit = async (careUnitId) => {
-  const careUnit = await CareUnit.findOne({ _id: careUnitId, isActive: true });
+  const careUnit = await CareUnit.findOne({ _id: careUnitId });
   return careUnit;
 };
 
