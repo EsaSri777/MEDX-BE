@@ -2,7 +2,7 @@ import Medication from "../models/Medication.js";
 import CareUnit from "../models/CareUnit.js";
 
 const ensureCareUnit = async (careUnitId) => {
-  return CareUnit.findOne({ _id: careUnitId, isActive: true });
+  return CareUnit.findOne({ _id: careUnitId });
 };
 
 const listMedications = async (req, res) => {
@@ -11,7 +11,7 @@ const listMedications = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const items = await Medication.find({ careUnit: careUnitId, isActive: true })
+    const items = await Medication.find({ careUnit: careUnitId })
       .populate("createdBy", "username")
       .populate("updatedBy", "username")
       .sort({ createdAt: -1 });
@@ -70,7 +70,7 @@ const updateMedication = async (req, res) => {
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
     const { medicationName, isActive } = req.body;
-    const updateData = { medicationName, isActive, updatedBy: req.user._id };
+    const updateData = { medicationName, updatedBy: req.user._id };
     Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
 
     const updated = await Medication.findOneAndUpdate(
@@ -96,7 +96,7 @@ const deleteMedication = async (req, res) => {
 
     const deleted = await Medication.findOneAndUpdate(
       { _id: id, careUnit: careUnitId },
-      { isActive: false, updatedBy: req.user._id },
+      { updatedBy: req.user._id },
       { new: true }
     );
     if (!deleted) return res.status(404).json({ message: "Medication not found" });
