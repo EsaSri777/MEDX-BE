@@ -2,7 +2,7 @@ import Fluid from "../models/Fluid.js";
 import CareUnit from "../models/CareUnit.js";
 
 const ensureCareUnit = async (careUnitId) => {
-  return CareUnit.findOne({ _id: careUnitId, isActive: true });
+  return CareUnit.findOne({ _id: careUnitId });
 };
 
 const listFluids = async (req, res) => {
@@ -11,7 +11,7 @@ const listFluids = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const items = await Fluid.find({ careUnit: careUnitId, isActive: true })
+    const items = await Fluid.find({ careUnit: careUnitId })
       .populate("createdBy", "username")
       .populate("updatedBy", "username")
       .sort({ createdAt: -1 });
@@ -69,8 +69,8 @@ const updateFluid = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const { fluidName, isActive } = req.body;
-    const updateData = { fluidName, isActive, updatedBy: req.user._id };
+    const { fluidName } = req.body;
+    const updateData = { fluidName, updatedBy: req.user._id };
     Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
 
     const updated = await Fluid.findOneAndUpdate(
@@ -96,7 +96,7 @@ const deleteFluid = async (req, res) => {
 
     const deleted = await Fluid.findOneAndUpdate(
       { _id: id, careUnit: careUnitId },
-      { isActive: false, updatedBy: req.user._id },
+      { updatedBy: req.user._id },
       { new: true }
     );
     if (!deleted) return res.status(404).json({ message: "Fluid not found" });
