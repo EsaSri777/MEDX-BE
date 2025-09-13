@@ -94,10 +94,9 @@ const deleteFluid = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const deleted = await Fluid.findOneAndUpdate(
+    const deleted = await Fluid.findOneAndDelete(
       { _id: id, careUnit: careUnitId },
-      { updatedBy: req.user._id },
-      { new: true }
+      { updatedBy: req.user._id }
     );
     if (!deleted) return res.status(404).json({ message: "Fluid not found" });
     res.json({ message: "Fluid deleted successfully" });
