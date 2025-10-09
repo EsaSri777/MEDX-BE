@@ -15,10 +15,6 @@ const fluidSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -32,8 +28,9 @@ const fluidSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-fluidSchema.index({ careUnit: 1, fluidName: 1 }, { unique: true, partialFilterExpression: { isActive: true } });
+fluidSchema.index(
+  { careUnit: 1, fluidName: 1 },
+  { unique: true, partialFilterExpression: { isActive: true } }
+);
 
 export default mongoose.model("Fluid", fluidSchema);
-
-

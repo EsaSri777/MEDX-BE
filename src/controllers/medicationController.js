@@ -11,7 +11,10 @@ const listMedications = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const items = await Medication.find({ careUnit: careUnitId, isActive: true })
+    const items = await Medication.find({
+      careUnit: careUnitId,
+      isActive: true,
+    })
       .populate("createdBy", "username")
       .populate("updatedBy", "username")
       .sort({ createdAt: -1 });
@@ -57,7 +60,9 @@ const createMedication = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Medication already exists in this care unit" });
+      return res
+        .status(400)
+        .json({ message: "Medication already exists in this care unit" });
     }
     res.status(500).json({ message: "Server error" });
   }
@@ -71,7 +76,9 @@ const updateMedication = async (req, res) => {
 
     const { medicationName, isActive } = req.body;
     const updateData = { medicationName, isActive, updatedBy: req.user._id };
-    Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
+    Object.keys(updateData).forEach(
+      (k) => updateData[k] === undefined && delete updateData[k]
+    );
 
     const updated = await Medication.findOneAndUpdate(
       { _id: id, careUnit: careUnitId },
@@ -80,7 +87,8 @@ const updateMedication = async (req, res) => {
     )
       .populate("createdBy", "username")
       .populate("updatedBy", "username");
-    if (!updated) return res.status(404).json({ message: "Medication not found" });
+    if (!updated)
+      return res.status(404).json({ message: "Medication not found" });
     res.json(updated);
   } catch (error) {
     console.error(error);
@@ -94,12 +102,12 @@ const deleteMedication = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const deleted = await Medication.findOneAndUpdate(
-      { _id: id, careUnit: careUnitId },
-      { isActive: false, updatedBy: req.user._id },
-      { new: true }
-    );
-    if (!deleted) return res.status(404).json({ message: "Medication not found" });
+    const deleted = await Medication.findOneAndDelete({
+      _id: id,
+      careUnit: careUnitId,
+    });
+    if (!deleted)
+      return res.status(404).json({ message: "Medication not found" });
     res.json({ message: "Medication deleted successfully" });
   } catch (error) {
     console.error(error);
@@ -107,6 +115,10 @@ const deleteMedication = async (req, res) => {
   }
 };
 
-export { listMedications, getMedication, createMedication, updateMedication, deleteMedication };
-
-
+export {
+  listMedications,
+  getMedication,
+  createMedication,
+  updateMedication,
+  deleteMedication,
+};

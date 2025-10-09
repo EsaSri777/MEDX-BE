@@ -8,7 +8,7 @@ import Medication from "../models/Medication.js";
 // @access  Private
 const getAllCareUnits = async (req, res) => {
   try {
-    const careUnits = await CareUnit.find({ isActive: true })
+    const careUnits = await CareUnit.find()
       .populate("createdBy", "username")
       .populate("updatedBy", "username")
       .sort({ createdAt: -1 });
@@ -114,33 +114,23 @@ const updateCareUnit = async (req, res) => {
 // @access  Private (Admin only)
 const deleteCareUnit = async (req, res) => {
   try {
-    const careUnit = await CareUnit.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false, updatedBy: req.user._id },
-      { new: true }
-    );
+    const careUnit = await CareUnit.findByIdAndDelete(req.params.id);
 
     if (!careUnit) {
       return res.status(404).json({ message: "Care unit not found" });
     }
 
-    // Cascade soft delete beds, fluids, and medications under this care unit
+    // Cascade delete (if you want hard deletes too)
     await Promise.all([
-      Bed.updateMany(
-        { careUnit: req.params.id, isActive: true },
-        { $set: { isActive: false, updatedBy: req.user._id } }
-      ),
-      Fluid.updateMany(
-        { careUnit: req.params.id, isActive: true },
-        { $set: { isActive: false, updatedBy: req.user._id } }
-      ),
-      Medication.updateMany(
-        { careUnit: req.params.id, isActive: true },
-        { $set: { isActive: false, updatedBy: req.user._id } }
-      ),
+      Bed.deleteMany({ careUnit: req.params.id }),
+      Fluid.deleteMany({ careUnit: req.params.id }),
+      Medication.deleteMany({ careUnit: req.params.id }),
     ]);
 
-    res.json({ message: "Care unit and its beds, fluids, medications deleted successfully" });
+    res.json({
+      message:
+        "Care unit and its beds, fluids, medications deleted successfully",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -153,5 +143,5 @@ export {
   createCareUnit,
   updateCareUnit,
   deleteCareUnit,
-  addCareUnit
-}; 
+  addCareUnit,
+};

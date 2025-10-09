@@ -3,7 +3,7 @@ import CareUnit from "../models/CareUnit.js";
 
 // Ensure care unit exists and is active
 const ensureCareUnit = async (careUnitId) => {
-  const careUnit = await CareUnit.findOne({ _id: careUnitId, isActive: true });
+  const careUnit = await CareUnit.findOne({ _id: careUnitId });
   return careUnit;
 };
 
@@ -73,7 +73,9 @@ const createBed = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Bed with this name already exists in this care unit" });
+      return res.status(400).json({
+        message: "Bed with this name already exists in this care unit",
+      });
     }
     res.status(500).json({ message: "Server error" });
   }
@@ -90,7 +92,9 @@ const updateBed = async (req, res) => {
 
     const { name, description, isActive } = req.body;
     const updateData = { name, description, isActive, updatedBy: req.user._id };
-    Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
+    Object.keys(updateData).forEach(
+      (k) => updateData[k] === undefined && delete updateData[k]
+    );
 
     const updated = await Bed.findOneAndUpdate(
       { _id: id, careUnit: careUnitId },
@@ -132,5 +136,3 @@ const deleteBed = async (req, res) => {
 };
 
 export { listBeds, getBed, createBed, updateBed, deleteBed };
-
-

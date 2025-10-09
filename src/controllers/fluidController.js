@@ -2,7 +2,7 @@ import Fluid from "../models/Fluid.js";
 import CareUnit from "../models/CareUnit.js";
 
 const ensureCareUnit = async (careUnitId) => {
-  return CareUnit.findOne({ _id: careUnitId, isActive: true });
+  return CareUnit.findOne({ _id: careUnitId });
 };
 
 const listFluids = async (req, res) => {
@@ -11,7 +11,7 @@ const listFluids = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const items = await Fluid.find({ careUnit: careUnitId, isActive: true })
+    const items = await Fluid.find({ careUnit: careUnitId })
       .populate("createdBy", "username")
       .populate("updatedBy", "username")
       .sort({ createdAt: -1 });
@@ -57,7 +57,9 @@ const createFluid = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Fluid already exists in this care unit" });
+      return res
+        .status(400)
+        .json({ message: "Fluid already exists in this care unit" });
     }
     res.status(500).json({ message: "Server error" });
   }
@@ -70,8 +72,10 @@ const updateFluid = async (req, res) => {
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
     const { fluidName, isActive } = req.body;
-    const updateData = { fluidName, isActive, updatedBy: req.user._id };
-    Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
+    const updateData = { fluidName, updatedBy: req.user._id };
+    Object.keys(updateData).forEach(
+      (k) => updateData[k] === undefined && delete updateData[k]
+    );
 
     const updated = await Fluid.findOneAndUpdate(
       { _id: id, careUnit: careUnitId },
@@ -94,10 +98,9 @@ const deleteFluid = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const deleted = await Fluid.findOneAndUpdate(
+    const deleted = await Fluid.findOneAndDelete(
       { _id: id, careUnit: careUnitId },
-      { isActive: false, updatedBy: req.user._id },
-      { new: true }
+      { updatedBy: req.user._id }
     );
     if (!deleted) return res.status(404).json({ message: "Fluid not found" });
     res.json({ message: "Fluid deleted successfully" });
@@ -108,5 +111,3 @@ const deleteFluid = async (req, res) => {
 };
 
 export { listFluids, getFluid, createFluid, updateFluid, deleteFluid };
-
-

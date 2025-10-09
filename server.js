@@ -15,6 +15,7 @@ import fluidRoutes from "./src/routes/fluid.js";
 import medicationRoutes from "./src/routes/medication.js";
 import hospitalLogoRoutes from "./src/routes/hospitalLogo.js";
 import patientRoutes from "./src/routes/patient.js";
+import staffRoutes from "./src/routes/staff.js";
 
 // Import middleware
 import { errorHandler } from "./src/middleware/errorHandler.js";
@@ -43,8 +44,20 @@ app.use("/api/care-units/:careUnitId/fluids", fluidRoutes);
 app.use("/api/care-units/:careUnitId/medications", medicationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", roleRoutes);
-app.use("/api/hospital-logos", hospitalLogoRoutes);
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    next();
+  },
+  express.static("uploads")
+);
+app.use("/api/hospital-logo", hospitalLogoRoutes);
 app.use("/api/patients", patientRoutes);
+app.use("/api/staff", staffRoutes);
+app.get("/", (req, res) => {
+  res.status(200).json("Hello Express");
+});
 
 // Health check route
 app.get("/api/health", (req, res) => {
