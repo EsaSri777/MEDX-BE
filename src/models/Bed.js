@@ -37,7 +37,7 @@ const bedSchema = new mongoose.Schema(
 // Indexes
 bedSchema.index({ careUnit: 1, isActive: 1 });
 bedSchema.index(
-  { name: 1, careUnit: 1 },
+  { bedName: 1, careUnit: 1 },
   { unique: true, partialFilterExpression: { isActive: true } }
 );
 

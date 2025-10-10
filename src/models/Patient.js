@@ -2,12 +2,23 @@ import mongoose from "mongoose";
 
 const patientSchema = new mongoose.Schema(
   {
-    firstName: { type: String, trim: true, required: true, maxlength: 100 },
-    lastName: { type: String, trim: true, required: true, maxlength: 100 },
-    dateOfBirth: { type: Date },
-    gender: { type: String, enum: ["male", "female", "other"], required: true },
+    // legacy name fields to maintain backward compatibility
+    firstName: { type: String, trim: true, maxlength: 100 },
+    lastName: { type: String, trim: true, maxlength: 100 },
+
+    // new admit-patient fields
+    pan: { type: String, trim: true, maxlength: 100, unique: true, sparse: true },
+    name: { type: String, trim: true, maxlength: 200 },
+    age: { type: Number, min: 0, max: 130 },
+    bloodGroup: { type: String, enum: ["A+","A-","B+","B-","AB+","AB-","O+","O-"], trim: true },
+    gender: { type: String, enum: ["male", "female", "other"] , required: true },
     phone: { type: String, trim: true, maxlength: 20 },
     email: { type: String, trim: true, lowercase: true },
+    address: { type: String, trim: true, maxlength: 500 },
+    severity: { type: String, enum: ["normal","severe"], default: "normal" },
+    assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    symptoms: { type: String, trim: true, maxlength: 500 },
+
     careUnit: { type: mongoose.Schema.Types.ObjectId, ref: "CareUnit", required: true, index: true },
     bed: { type: mongoose.Schema.Types.ObjectId, ref: "Bed", required: true, index: true },
     admittedAt: { type: Date, default: Date.now },

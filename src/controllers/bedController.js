@@ -58,10 +58,10 @@ const createBed = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const { name, description } = req.body;
+    const { bedName, description } = req.body;
 
     const newBed = new Bed({
-      name,
+      bedName,
       description,
       careUnit: careUnitId,
       createdBy: req.user._id,
@@ -90,8 +90,8 @@ const updateBed = async (req, res) => {
     const cu = await ensureCareUnit(careUnitId);
     if (!cu) return res.status(404).json({ message: "Care unit not found" });
 
-    const { name, description, isActive } = req.body;
-    const updateData = { name, description, isActive, updatedBy: req.user._id };
+    const { bedName, description, isActive } = req.body;
+    const updateData = { bedName, description, isActive, updatedBy: req.user._id };
     Object.keys(updateData).forEach(
       (k) => updateData[k] === undefined && delete updateData[k]
     );

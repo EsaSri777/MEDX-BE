@@ -1,13 +1,35 @@
 import Patient from "../models/Patient.js";
 import CareUnit from "../models/CareUnit.js";
 import Bed from "../models/Bed.js";
+import User from "../models/User.js";
 
 const ensureCareUnitAndBed = async (careUnitId, bedId) => {
-  const careUnit = await CareUnit.findOne({ _id: careUnitId, isActive: true });
+  const careUnit = await CareUnit.findOne({ _id: careUnitId });
   if (!careUnit) return { error: "Care unit not found" };
-  const bed = await Bed.findOne({ _id: bedId, careUnit: careUnitId, isActive: true });
+  const bed = await Bed.findOne({ _id: bedId, careUnit: careUnitId });
   if (!bed) return { error: "Bed not found in this care unit" };
   return { careUnit, bed };
+};
+
+// List patients by care unit
+const listPatientsByCareUnit = async (req, res) => {
+  try {
+    const { careUnitId } = req.params;
+    const patients = await Patient.find({ isActive: true, careUnit: careUnitId })
+      .populate("careUnit", "careUnit")
+      .populate("bed", "bedName")
+      .populate("assignedDoctor", "firstName lastName username specialization")
+      .populate("createdBy", "username")
+      .sort({ createdAt: -1 });
+    res.json(patients);
+  } catch (error) {
+    // handle duplicate PAN gracefully
+    if (error && error.code === 11000 && (error.keyPattern?.pan || (error.message && error.message.includes('pan_1')))) {
+      return res.status(400).json({ message: "PAN already exists" });
+    }
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // List patients (active)
@@ -15,11 +37,15 @@ const listPatients = async (req, res) => {
   try {
     const patients = await Patient.find({ isActive: true })
       .populate("careUnit", "careUnit")
-      .populate("bed", "name")
+      .populate("bed", "bedName")
+      .populate("assignedDoctor", "firstName lastName username specialization")
       .populate("createdBy", "username")
       .sort({ createdAt: -1 });
     res.json(patients);
   } catch (error) {
+    if (error && error.code === 11000 && (error.keyPattern?.pan || (error.message && error.message.includes('pan_1')))) {
+      return res.status(400).json({ message: "PAN already exists" });
+    }
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
@@ -28,7 +54,7 @@ const listPatients = async (req, res) => {
 // Admit patient (create)
 const admitPatient = async (req, res) => {
   try {
-    const { firstName, lastName, dateOfBirth, gender, phone, email, careUnit, bed } = req.body;
+    const { pan, name, age, bloodGroup, gender, admitDate, phone, email, address, careUnit, assignedDoctor, bed, severity, symptoms } = req.body;
 
     const { error, bed: bedDoc } = await ensureCareUnitAndBed(careUnit, bed);
     if (error) return res.status(404).json({ message: error });
@@ -37,21 +63,32 @@ const admitPatient = async (req, res) => {
       return res.status(400).json({ message: "Selected bed is already occupied" });
     }
 
+    // verify assigned doctor exists and is active
+    const doctor = await User.findOne({ _id: assignedDoctor, isActive: true });
+    if (!doctor) return res.status(404).json({ message: "Assigned doctor not found" });
+
     const patient = new Patient({
-      firstName,
-      lastName,
-      dateOfBirth,
+      pan,
+      name,
+      age,
+      bloodGroup,
       gender,
       phone,
       email,
+      address,
+      severity,
       careUnit,
       bed,
+      assignedDoctor,
+      symptoms,
+      admittedAt: admitDate,
       createdBy: req.user._id,
     });
     const saved = await patient.save();
     await Bed.findByIdAndUpdate(bed, { isOccupied: true, updatedBy: req.user._id });
     await saved.populate("careUnit", "careUnit");
-    await saved.populate("bed", "name");
+    await saved.populate("bed", "bedName");
+    await saved.populate("assignedDoctor", "firstName lastName username specialization");
     res.status(201).json(saved);
   } catch (error) {
     console.error(error);
@@ -64,7 +101,8 @@ const getPatient = async (req, res) => {
   try {
     const doc = await Patient.findById(req.params.id)
       .populate("careUnit", "careUnit")
-      .populate("bed", "name")
+      .populate("bed", "bedName")
+      .populate("assignedDoctor", "firstName lastName username specialization")
       .populate("createdBy", "username")
       .populate("updatedBy", "username");
     if (!doc) return res.status(404).json({ message: "Patient not found" });
@@ -78,7 +116,7 @@ const getPatient = async (req, res) => {
 // Update patient (optionally move to another bed)
 const updatePatient = async (req, res) => {
   try {
-    const { careUnit, bed, dischargedAt, ...rest } = req.body;
+    const { careUnit, bed, dischargedAt, assignedDoctor, ...rest } = req.body;
 
     // if moving beds/careUnit, validate and free/occupy accordingly
     if (careUnit || bed) {
@@ -96,7 +134,7 @@ const updatePatient = async (req, res) => {
       }
     }
 
-    const updateData = { ...rest, careUnit, bed, dischargedAt, updatedBy: req.user._id };
+    const updateData = { ...rest, careUnit, bed, dischargedAt, assignedDoctor, updatedBy: req.user._id };
     Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
     const updated = await Patient.findByIdAndUpdate(
       req.params.id,
@@ -104,7 +142,8 @@ const updatePatient = async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate("careUnit", "careUnit")
-      .populate("bed", "name")
+      .populate("bed", "bedName")
+      .populate("assignedDoctor", "firstName lastName username specialization")
       .populate("createdBy", "username")
       .populate("updatedBy", "username");
     if (!updated) return res.status(404).json({ message: "Patient not found" });
@@ -149,6 +188,6 @@ const deletePatient = async (req, res) => {
   }
 };
 
-export { listPatients, admitPatient, getPatient, updatePatient, dischargePatient, deletePatient };
+export { listPatients, listPatientsByCareUnit, admitPatient, getPatient, updatePatient, dischargePatient, deletePatient };
 
 
