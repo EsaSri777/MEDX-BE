@@ -1,9 +1,14 @@
 import dotenv from "dotenv";
 import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 // Import configurations
 import connectDB from "./src/config/database.js";
 import configureExpress from "./src/config/express.js";
+
+// Import services
+import monitorSimulationService from "./src/services/monitorSimulationService.js";
 
 // Import routes
 import authRoutes from "./src/routes/auth.js";
